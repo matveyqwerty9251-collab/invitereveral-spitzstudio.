@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script>
+  // Перенаправляем на index.html, сохраняя путь
+  var path = window.location.pathname;
+  // Если путь содержит код после /invitereveral-spitzstudio/
+  var parts = path.split('/');
+  var code = parts[parts.length - 1];
+  // Сохраняем код в sessionStorage и переходим на главную
+  if (code && code.length > 5) {
+    sessionStorage.setItem('ref_code', code);
+  }
+  window.location.replace('/invitereveral-spitzstudio/');
+</script>
+</head>
+<body></body>
+</html>
