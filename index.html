@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spitz-Studio — Реферальная система</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(160deg, #1a0b2e 0%, #0a0414 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #fff;
+  }
+  .card {
+    background: rgba(255,255,255,0.05);
+    border: 1.5px solid rgba(180,122,255,0.3);
+    border-radius: 24px;
+    padding: 32px 24px;
+    max-width: 420px;
+    width: 100%;
+    box-shadow: 0 0 60px rgba(139,61,255,0.3);
+    backdrop-filter: blur(20px);
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    justify-content: center;
+  }
+  .logo-circle {
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 3px solid #b47aff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 900;
+    box-shadow: 0 0 20px rgba(180,122,255,0.7);
+  }
+  .logo-text { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+  h1 { font-size: 20px; text-align: center; margin-bottom: 8px; }
+  .sub { font-size: 13px; text-align: center; color: rgba(200,180,255,0.7); margin-bottom: 28px; }
+  label { font-size: 12px; color: rgba(200,180,255,0.7); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+  input {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1.5px solid rgba(180,122,255,0.3);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
+    font-size: 15px;
+    margin-bottom: 16px;
+    outline: none;
+    transition: border 0.2s;
+  }
+  input:focus { border-color: #b47aff; box-shadow: 0 0 20px rgba(180,122,255,0.4); }
+  button {
+    width: 100%;
+    padding: 15px;
+    border-radius: 14px;
+    border: none;
+    background: linear-gradient(135deg, #8b3dff, #6a11cb);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 30px rgba(139,61,255,0.5);
+    margin-bottom: 10px;
+  }
+  button:active { transform: scale(0.97); }
+  button.secondary {
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(180,122,255,0.3);
+    box-shadow: none;
+    font-size: 14px;
+  }
+  .result {
+    margin-top: 20px;
+    background: rgba(139,61,255,0.1);
+    border: 1.5px solid rgba(180,122,255,0.4);
+    border-radius: 16px;
+    padding: 18px;
+    word-break: break-all;
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
+  }
+  .result.show { display: block; animation: fadeIn 0.4s; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .result .link { color: #d4b0ff; font-weight: 600; margin-bottom: 12px; }
+  .history {
+    margin-top: 24px;
+    border-top: 1px solid rgba(180,122,255,0.2);
+    padding-top: 18px;
+  }
+  .history h3 { font-size: 13px; color: rgba(200,180,255,0.7); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .history-item {
+    font-size: 12px;
+    color: #d4b0ff;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(180,122,255,0.1);
+    word-break: break-all;
+    cursor: pointer;
+  }
+  .history-item:active { color: #fff; }
+  .empty { font-size: 12px; color: rgba(200,180,255,0.4); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-circle">J</div>
+    <div class="logo-text">Spitz-Studio</div>
+  </div>
+  <h1>Реферальная система</h1>
+  <div class="sub">Создай свою ссылку и приглашай друзей</div>
+
+  <label>Твоё имя или ник</label>
+  <input type="text" id="nameInput" placeholder="Например: Matvey" autocomplete="off">
+
+  <button id="generateBtn">🎲 Сгенерировать ссылку</button>
+
+  <div class="result" id="result">
+    <div class="link" id="linkText"></div>
+    <button class="secondary" id="copyBtn">📋 Копировать ссылку</button>
+  </div>
+
+  <div class="history" id="historyBlock">
+    <h3>Мои ссылки</h3>
+    <div id="historyList"><div class="empty">Пока пусто</div></div>
+  </div>
+</div>
+
+<script>
+  // ===== НАСТРОЙКИ =====
+  const BASE_URL = 'https://matveyqwerty9251-collab.github.io/invitereveral-spitzstudio/';
+  const STORAGE_KEY = 'spitz_ref_links';
+
+  // ===== ГЕНЕРАЦИЯ КОДА =====
+  function generateCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let code = '';
+    for (let i = 0; i < 16; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+  }
+
+  // ===== СОХРАНЕНИЕ =====
+  function getLinks() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch(e) { return []; }
+  }
+  function saveLink(name, code) {
+    const links = getLinks();
+    links.unshift({ name, code, date: new Date().toISOString() });
+    if (links.length > 20) links.pop();
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(links)); } catch(e) {}
+  }
+
+  // ===== ОТРИСОВКА ИСТОРИИ =====
+  function renderHistory() {
+    const links = getLinks();
+    const list = document.getElementById('historyList');
+    if (links.length === 0) {
+      list.innerHTML = '<div class="empty">Пока пусто</div>';
+      return;
+    }
+    list.innerHTML = links.map(l => 
+      `<div class="history-item" data-code="${l.code}">${l.name || 'Без имени'} → .../${l.code}</div>`
+    ).join('');
+    // Клик по истории — копирует ссылку
+    list.querySelectorAll('.history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const code = el.dataset.code;
+        copyText(BASE_URL + code);
+      });
+    });
+  }
+
+  // ===== КОПИРОВАНИЕ =====
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast('Скопировано!');
+      }).catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
+  }
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('Скопировано!'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#8b3dff;color:#fff;padding:12px 24px;border-radius:12px;font-size:14px;box-shadow:0 0 30px rgba(139,61,255,0.6);z-index:999;animation:fadeIn 0.3s;';
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2000);
+  }
+
+  // ===== ОСНОВНАЯ ЛОГИКА =====
+  document.getElementById('generateBtn').addEventListener('click', () => {
+    const name = document.getElementById('nameInput').value.trim() || 'Друг';
+    const code = generateCode();
+    const fullLink = BASE_URL + code;
+
+    document.getElementById('linkText').textContent = fullLink;
+    document.getElementById('result').classList.add('show');
+
+    saveLink(name, code);
+    renderHistory();
+  });
+
+  document.getElementById('copyBtn').addEventListener('click', () => {
+    const link = document.getElementById('linkText').textContent;
+    if (link) copyText(link);
+  });
+
+  // ===== СТАРТ =====
+  renderHistory();
+</script>
+</body>
+  </html>
